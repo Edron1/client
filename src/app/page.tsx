@@ -1,113 +1,117 @@
-import Image from "next/image";
+"use client"
+import { useState, useEffect } from 'react';
+import './styles/style.scss';
+import { AiOutlineCaretUp, AiOutlineCaretDown} from 'react-icons/ai';
+import { IoIosRefresh } from "react-icons/io";
 
 export default function Home() {
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [users, setUsers] = useState([]);
+
+  const getUsers = () => {
+    fetch("http://localhost:3000/getUpToDatePasswords")
+      .then(response => {
+        return response.json()
+      })
+      .then(data => {
+        setUsers(data)
+      })
+  }
+
+  const sortByStatus = () => {
+    const data = [...users].sort((a, b) => 
+      b.status.localeCompare(a.status)
+    );
+    setUsers(data);
+  }
+  const sortByLogin = () => {
+    const data = [...users].sort((a, b) => 
+      a.login.localeCompare(b.login)
+    );
+    setUsers(data);
+  }
+
+  const sortByLastUpdate = () => {
+    const data = [...users].sort((a, b) => 
+      a.last_update.split('.').reverse().join().localeCompare(b.last_update.split('.').reverse().join())
+    );
+    setUsers(data);
+  }
+
+  useEffect(() => {
+    getUsers()
+  }, [])
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div>
+      <div className="card w-1/2 ">
+        <div className='card-content'>
+            <div className='flex items-center justify-center min-w-[100px] text-lg ml-2 h-[50px] rounded-lg'>
+              <p>Актуальность паролей</p>
+            </div>
+            <button className='flex items-center justify-center bg-[#7bb83c] ml-5 w-[50px] border-2 h-[50px] rounded-lg cursor-pointer border-lime-600 hover:bg-lime-600' onClick={getUsers}>
+              <IoIosRefresh className="h-8 text-white text-lg"/>
+            </button>         
+            <div className='relative flex flex-col item-center ml-auto min-w-[100px] w-[33%] h-2'>
+              <button
+                onClick={() => setIsOpen((prev) => !prev)} 
+                className='p-2 w-full flex items-center justify-between border-2 text-white rounded-lg border-lime-600 bg-[#7bb83c] hover:bg-lime-600'
+                >
+                  Сортировка
+                  {!isOpen ? (
+                    <AiOutlineCaretDown className='h-8'/>
+                  ) : (
+                    <AiOutlineCaretUp className='h-8'/>
+                  )}
+              </button>
+              {isOpen && (
+                <div className='z-10 absolute top-[55px] bg-[#7bb83c] text-white flex flex-column items-start rounded-lg p-2 w-full border-2 border-lime-600'>
+                  <div className='w-full cursor-pointer'>
+                    <h3 className='hover:bg-lime-600 hover:rounded-lg' onClick={sortByLogin}>Логин</h3>
+                    <h3 className='hover:bg-lime-600 hover:rounded-lg' onClick={sortByLastUpdate}>Последнее обновление</h3>
+                    <h3 className='hover:bg-lime-600 hover:rounded-lg' onClick={sortByStatus}>Статус</h3>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className='relative shadow-md w-full mt-5 max-h-[290px] overflow-x-auto overflow-y-auto rounded-lg'>
+              <table className='w-full text-left rtl:text-right text-gray-500 '>
+                <thead className=' bg-gray-50 dark:bg-gray-700'>
+                  <tr>
+                    <th scope="col" className='px-6 py-3'>
+                      Логин
+                    </th>
+                    <th scope="col" className='px-6 py-3'>
+                      Последнее обновление
+                    </th>
+                    <th scope="col" className='px-6 py-3'>
+                      Статус
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user, key) => {
+                    return (
+                      <tr key={key}>
+                        <td className='px-6 py-3'>
+                          {user.login}
+                        </td>
+                        <td className='px-6 py-3'>
+                          {user.last_update}
+                        </td>
+                        <td className={user.status=='expired' ? 'px-6 py-3 text-white bg-red-500' : 'px-6 py-3 text-white bg-[#7bb83c]'}>
+                          {user.status=='expired' ? 'Истёк' : 'Актуален'}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+
+              </table>
+            </div>
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
 }
